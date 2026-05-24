@@ -41,6 +41,7 @@ namespace ComputeTrust.Algorithms
             foreach (var trust in teacherStudentTrusts.Where(t => t.Value == null))
             {
                 var indirectTrust = FindIndirectTrust(trust.First, trust.Second, nodes, edges);
+                trust.Type = TrustType.Indirect;
                 trust.Value = indirectTrust;
             }
         }

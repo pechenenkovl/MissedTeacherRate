@@ -2,6 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Missed Teacher Rate" Height="600" Width="900">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -19,7 +22,11 @@
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-            <Button Content="Calculate" Command="{Binding CalculateCommand}" IsEnabled="{Binding CanCalculate}"/>
+            <Button Content="Calculate" Command="{Binding CalculateCommand}" IsEnabled="{Binding CanCalculate}" Margin="0,0,10,0"/>
+            <Button Content="Show Intermediate Results" 
+                    Command="{Binding ShowIntermediateResultCommand}"
+                    Visibility="{Binding HasIntermediateResultSupport, Converter={StaticResource BoolToVisibilityConverter}}"
+                    IsEnabled="{Binding CanShowIntermediateResult}"/>
         </StackPanel>
         <TextBlock Text="Source Matrix:" FontWeight="Bold" Grid.Row="1"/>
         <DataGrid Grid.Row="1" ItemsSource="{Binding SourceMatrixView}" AutoGenerateColumns="True" Margin="0,20,0,0" IsReadOnly="True"/>

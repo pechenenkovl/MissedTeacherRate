@@ -4,9 +4,13 @@ using MissedTeacherRate.Models;
 
 namespace MissedTeacherRate.Algorithms.COMAS
 {
-    public class ComasAlgorithmCalculator : IMissedMarksCalculator
+    public class ComasAlgorithmCalculator : IMissedMarksCalculator, IHasIntermediateResult<List<Trust<Person, Person>>>
     {
         public string Name => "COMAS";
+
+        public List<Trust<Person, Person>>? IntermediateResult { get; private set; }
+
+        public string IntermediateResultName => "Trust Values";
 
         public MarksMatrix CalculateMissedMarks(MarksMatrix matrix)
         {
@@ -14,6 +18,10 @@ namespace MissedTeacherRate.Algorithms.COMAS
             var studentsDirectTrust = DirectTrustCalculation.ComputeStudentsTrust(matrix);
 
             IndirectTrustCalculation.FillIndirectTrusts(teacherToStudentsDirectTrust, studentsDirectTrust);
+
+            IntermediateResult = new List<Trust<Person, Person>>();
+            IntermediateResult.AddRange(teacherToStudentsDirectTrust.Select(t => new Trust<Person, Person>(t.First, t.Second) { Value = t.Value, Type = t.Type }));
+            IntermediateResult.AddRange(studentsDirectTrust.Select(t => new Trust<Person, Person>(t.First, t.Second) { Value = t.Value, Type = t.Type }));
 
             var resultMatrix = new MarksMatrix(matrix);
             FillMissedTeacherMarks(resultMatrix, teacherToStudentsDirectTrust);

@@ -2,6 +2,12 @@
 
 namespace MissedTeacherRate.Algorithms.COMAS.Models
 {
+    public enum TrustType
+    {
+        Direct,
+        Indirect
+    }
+
     public class Trust<T, V> where T : Person where V : Person
     {
         public T First { get; }
@@ -9,6 +15,8 @@ namespace MissedTeacherRate.Algorithms.COMAS.Models
         public V Second { get; }
 
         public double? Value { get; set; }
+
+        public TrustType Type { get; set; }
 
         public Trust(T first, V second)
         {

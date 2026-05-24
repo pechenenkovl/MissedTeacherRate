@@ -17,6 +17,7 @@ namespace ComputeTrust.Algorithms
             {
                 var trust = new Trust<Teacher, Student>(teacher, student);
                 trust.Value = ComputeDirectTrust(matrix, teacher, student);
+                trust.Type = TrustType.Direct;
                 result.Add(trust);
             }
             return result;
@@ -40,6 +41,7 @@ namespace ComputeTrust.Algorithms
                         continue;
                     }
                     var trust = new Trust<Student, Student>(student1, student2);
+                    trust.Type = TrustType.Direct;
                     trust.Value = trustValue;
                     result.Add(trust);
                 }

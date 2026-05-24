@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using MissedTeacherRate.Models;
 using MissedTeacherRate.Algorithms.COMAS;
+using MissedTeacherRate.Algorithms.COMAS.Models;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.IO;
@@ -35,6 +36,20 @@ public partial class MainWindowViewModel : ObservableObject
     public ObservableCollection<IMissedMarksCalculator> Algorithms { get; } = new();
     [ObservableProperty] 
     private IMissedMarksCalculator? selectedAlgorithm;
+
+    partial void OnSelectedAlgorithmChanged(IMissedMarksCalculator? value)
+    {
+        OnPropertyChanged(nameof(HasIntermediateResultSupport));
+        OnPropertyChanged(nameof(CanShowIntermediateResult));
+        ShowIntermediateResultCommand.NotifyCanExecuteChanged();
+    }
+
+    public bool HasIntermediateResultSupport => SelectedAlgorithm is IHasIntermediateResult;
+
+    public bool CanShowIntermediateResult => 
+        SelectedAlgorithm is IHasIntermediateResult provider && 
+        _resultMatrix != null && 
+        provider.IntermediateResult != null;
 
     public MainWindowViewModel()
     {
@@ -85,6 +100,36 @@ public partial class MainWindowViewModel : ObservableObject
         if (_sourceMatrix == null || SelectedAlgorithm == null) return;
         _resultMatrix = SelectedAlgorithm.CalculateMissedMarks(_sourceMatrix);
         ResultMatrixView = ToDataTable(_resultMatrix).DefaultView;
+        OnPropertyChanged(nameof(CanShowIntermediateResult));
+        ShowIntermediateResultCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanShowIntermediateResult))]
+    private void ShowIntermediateResult()
+    {
+        if (SelectedAlgorithm is IHasIntermediateResult provider && provider.IntermediateResult != null)
+        {
+            switch (SelectedAlgorithm)
+            {
+                case ComasAlgorithmCalculator comasCalculator:
+                    var trusts = comasCalculator.IntermediateResult;
+                    if (trusts != null)
+                    {
+                        var window = new ComasTrustWindow(trusts);
+                        window.Owner = System.Windows.Application.Current.MainWindow;
+                        window.ShowDialog();
+                    }
+                    break;
+
+                default:
+                    System.Windows.MessageBox.Show(
+                        $"Intermediate Result: {provider.IntermediateResultName}\n\nNo specific viewer available.",
+                        provider.IntermediateResultName,
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information);
+                    break;
+            }
+        }
     }
 
     // Helper: Convert MarksMatrix to DataTable for DataGrid
