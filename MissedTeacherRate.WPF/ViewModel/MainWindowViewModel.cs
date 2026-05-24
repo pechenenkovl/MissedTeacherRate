@@ -8,6 +8,7 @@ using MissedTeacherRate.Algorithms.COMAS.Models;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.IO;
+using MissedTeacherRate.Parsers;
 using MissedTeacherRate.Parsers.MissedTeacherRate.Parsers;
 using MissedTeacherRate.Algorithms;
 
@@ -15,7 +16,7 @@ namespace MissedTeacherRate.WPF.ViewModel;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    private string? _excelFilePath;
+    private string? _filePath;
     private MarksMatrix? _sourceMatrix;
     private MarksMatrix? _resultMatrix;
 
@@ -32,6 +33,10 @@ public partial class MainWindowViewModel : ObservableObject
         get => _resultMatrixView;
         set => SetProperty(ref _resultMatrixView, value);
     }
+
+    public ObservableCollection<IRatingMatrixParser> Parsers { get; } = new();
+    [ObservableProperty]
+    private IRatingMatrixParser? selectedParser;
 
     public ObservableCollection<IMissedMarksCalculator> Algorithms { get; } = new();
     [ObservableProperty] 
@@ -53,6 +58,11 @@ public partial class MainWindowViewModel : ObservableObject
 
     public MainWindowViewModel()
     {
+        // Initialize parsers
+        Parsers.Add(new ExcelMatrixParser());
+        Parsers.Add(new LatexMatrixParser());
+        SelectedParser = Parsers.FirstOrDefault();
+
         // Use reflection to find all non-abstract, public classes implementing IMissedMarksCalculator
         var calculatorTypes = typeof(IMissedMarksCalculator).Assembly
             .GetTypes()
@@ -68,12 +78,19 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenExcel()
+    private void OpenFile()
     {
-        var dlg = new OpenFileDialog { Filter = "Excel Files|*.xlsx", DefaultDirectory = Environment.CurrentDirectory };
+        if (SelectedParser == null) return;
+
+        var dlg = new OpenFileDialog 
+        { 
+            Filter = SelectedParser.FileFilter, 
+            InitialDirectory = Environment.CurrentDirectory 
+        };
+
         if (dlg.ShowDialog() == true)
         {
-            _excelFilePath = dlg.FileName;
+            _filePath = dlg.FileName;
             _sourceMatrix = null;
             _resultMatrix = null;
             ResultMatrixView = new DataView();
@@ -83,10 +100,9 @@ public partial class MainWindowViewModel : ObservableObject
 
     private void Parse()
     {
-        if (_excelFilePath == null) return;
-        using var stream = File.OpenRead(_excelFilePath);
-        var parser = new ExcelMatrixParser();
-        _sourceMatrix = parser.Parse(stream);
+        if (_filePath == null || SelectedParser == null) return;
+        using var stream = File.OpenRead(_filePath);
+        _sourceMatrix = SelectedParser.Parse(stream);
         SourceMatrixView = ToDataTable(_sourceMatrix).DefaultView;
         OnPropertyChanged(nameof(CanCalculate));
         CalculateCommand.NotifyCanExecuteChanged();

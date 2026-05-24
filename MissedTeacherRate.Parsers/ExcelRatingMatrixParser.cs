@@ -7,6 +7,9 @@ namespace MissedTeacherRate.Parsers
     {
         public class ExcelMatrixParser : IRatingMatrixParser
         {
+            public string Name => "Excel";
+            public string FileFilter => "Excel Files|*.xlsx";
+
             public MarksMatrix Parse(Stream excelStream)
             {
                 ExcelPackage.License.SetNonCommercialPersonal("Vladyslav Pechenenko, PhD student");
